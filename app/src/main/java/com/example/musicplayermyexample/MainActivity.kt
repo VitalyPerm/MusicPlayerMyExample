@@ -31,13 +31,9 @@ class MainActivity : AppCompatActivity(), MusicStoppedListener {
     }
 
     private fun playAudio() {
-        val intent = Intent(this, MyMusicService::class.java).putExtra("AUDIO", audioLink)
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startService(intent)
-            }
-        } catch (e: SecurityException) {
-            Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+        val intent = Intent(this, MyMusicService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
         }
     }
 
