@@ -11,16 +11,23 @@ import android.graphics.Color
 import android.media.browse.MediaBrowser
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
 import android.os.IBinder
 import android.service.media.MediaBrowserService
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_MIN
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.ui.PlayerNotificationManager
 import com.google.android.exoplayer2.util.NotificationUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 
 class MyMusicService : MediaBrowserService() {
@@ -52,14 +59,22 @@ class MyMusicService : MediaBrowserService() {
 
             override fun createCurrentContentIntent(player: Player): PendingIntent? {
                 val i = Intent(this@MyMusicService, MainActivity::class.java)
-                return PendingIntent.getActivity(this@MyMusicService, 0, i, PendingIntent.FLAG_UPDATE_CURRENT)
+                return PendingIntent.getActivity(
+                    this@MyMusicService,
+                    0,
+                    i,
+                    PendingIntent.FLAG_UPDATE_CURRENT
+                )
             }
 
             override fun getCurrentContentText(player: Player): CharSequence? {
                 return "TEXT"
             }
 
-            override fun getCurrentLargeIcon(player: Player, callback: PlayerNotificationManager.BitmapCallback): Bitmap? {
+            override fun getCurrentLargeIcon(
+                player: Player,
+                callback: PlayerNotificationManager.BitmapCallback
+            ): Bitmap? {
                 return null
             }
         }
@@ -70,6 +85,24 @@ class MyMusicService : MediaBrowserService() {
             .setChannelNameResourceId(R.string.channel_name)
             .build().apply { setPlayer(mediaPlayer) }
         startForeground()
+        observeSeek(true)
+    }
+
+    fun observeSeek(observe: Boolean) {
+        GlobalScope.launch(Dispatchers.Main) {
+            while (observe){
+                val time = mediaPlayer.currentPosition / 1000
+                sendSeekBar(time)
+                Log.d("CHECK_I", "$time")
+                delay(1000)
+            }
+        }
+    }
+
+    fun sendSeekBar(time: Long){
+        val i = Intent("my_message")
+        i.putExtra("SEEK", time)
+        LocalBroadcastManager.getInstance(this).sendBroadcast(i)
     }
 
     fun playSong(url: String) {
@@ -79,6 +112,15 @@ class MyMusicService : MediaBrowserService() {
             playWhenReady = true
         }
     }
+
+    fun seekTo(forward: Boolean) {
+        if (forward) {
+            mediaPlayer.seekTo(mediaPlayer.currentPosition + 10000)
+        } else {
+            mediaPlayer.seekTo(mediaPlayer.currentPosition - 10000)
+        }
+    }
+
 
     private fun startForeground() {
         val channelId =
@@ -108,6 +150,12 @@ class MyMusicService : MediaBrowserService() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        intent?.let {
+            if (it.hasCategory("SKIP_TEN")) {
+                seekTo(false)
+            }
+        }
+
         return START_STICKY
     }
 

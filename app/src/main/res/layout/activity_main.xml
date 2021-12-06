@@ -4,13 +4,41 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/ic_bg"
     tools:context=".MainActivity">
 
-   <Button
-       android:id="@+id/play"
-       android:layout_width="wrap_content"
-       android:layout_height="wrap_content"
-       android:text="Play"
-       android:layout_gravity="center"/>
+
+    <TextView
+        android:id="@+id/tv_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:textColor="@color/black"
+        android:textSize="30sp"
+        tools:text="CHECK!!!" />
+
+    <View
+        android:id="@+id/back"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="110dp"
+        android:layout_marginBottom="70dp" />
+
+    <View
+        android:id="@+id/next"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="270dp"
+        android:layout_marginBottom="70dp" />
+
+    <View
+        android:id="@+id/play"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="180dp"
+        android:layout_marginBottom="60dp" />
 
 </FrameLayout>
