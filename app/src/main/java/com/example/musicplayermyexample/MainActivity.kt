@@ -31,7 +31,9 @@ class MainActivity : AppCompatActivity(), MusicStoppedListener {
     }
 
     private fun playAudio() {
-        val intent = Intent(this, MyMusicService::class.java)
+        val intent = Intent(this, MyMusicService::class.java).apply {
+            putExtra("AUDIO", "dumb")
+        }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(intent)
         }
