@@ -4,8 +4,10 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.Color
 import android.media.browse.MediaBrowser
@@ -33,6 +35,7 @@ import kotlinx.coroutines.launch
 class MyMusicService : MediaBrowserService() {
     private lateinit var mediaPlayer: ExoPlayer
     private lateinit var notificationManager: PlayerNotificationManager
+    private lateinit var broadcastReceiver: LocalBroadcastManager
 
 
     override fun onBind(intent: Intent): IBinder {
@@ -52,6 +55,7 @@ class MyMusicService : MediaBrowserService() {
         super.onCreate()
         mediaPlayer = ExoPlayer.Builder(this).build()
         playSong(Links.dumb)
+
         val mediaDescriptionAdapter = object : PlayerNotificationManager.MediaDescriptionAdapter {
             override fun getCurrentContentTitle(player: Player): CharSequence {
                 return "TITLE"
@@ -86,11 +90,30 @@ class MyMusicService : MediaBrowserService() {
             .build().apply { setPlayer(mediaPlayer) }
         startForeground()
         observeSeek(true)
+
+    }
+
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(p0: Context?, p1: Intent?) {
+
+            val back = p1?.getStringExtra("ten_back")
+            val forward = p1?.getStringExtra("ten_forward")
+            Log.d("RECIVER", "back $back forward $forward")
+            when {
+                (p1?.getStringExtra("ten_back") == "ten_back") -> {
+                    seekTo(false)
+                }
+                (p1?.getStringExtra("ten_forward") == "ten_forward") -> {
+                    seekTo(true)
+                }
+            }
+        }
+
     }
 
     fun observeSeek(observe: Boolean) {
         GlobalScope.launch(Dispatchers.Main) {
-            while (observe){
+            while (observe) {
                 val time = mediaPlayer.currentPosition / 1000
                 sendSeekBar(time)
                 Log.d("CHECK_I", "$time")
@@ -99,21 +122,25 @@ class MyMusicService : MediaBrowserService() {
         }
     }
 
-    fun sendSeekBar(time: Long){
+    fun sendSeekBar(time: Long) {
         val i = Intent("my_message")
         i.putExtra("SEEK", time)
-        LocalBroadcastManager.getInstance(this).sendBroadcast(i)
+        i.putExtra("duration", mediaPlayer.duration / 1000)
+        broadcastReceiver.sendBroadcast(i)
     }
+
 
     fun playSong(url: String) {
         mediaPlayer.apply {
             addMediaItem(MediaItem.fromUri(url))
             prepare()
             playWhenReady = true
+            //   sendDuration(mediaPlayer.duration)
         }
     }
 
     fun seekTo(forward: Boolean) {
+        Log.d("CHECK___", "SEEKTO ${forward}")
         if (forward) {
             mediaPlayer.seekTo(mediaPlayer.currentPosition + 10000)
         } else {
@@ -134,6 +161,8 @@ class MyMusicService : MediaBrowserService() {
             .setCategory(Notification.CATEGORY_SERVICE)
             .build()
         startForeground(101, notification)
+        broadcastReceiver = LocalBroadcastManager.getInstance(this)
+        broadcastReceiver.registerReceiver(receiver, IntentFilter("my_message"))
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
